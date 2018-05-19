@@ -138,9 +138,12 @@ For those coming from virtualized environments, containers are often compared wi
    
    Docker Engine combines the namespaces, control groups, and UnionFS into a wrapper called a container format. The default container format is libcontainer. In the future, Docker may support other container formats by integrating with technologies such as BSD Jails or Solaris Zones.
    
-# References:
 
- [Introduction to Docker](https://medium.freecodecamp.org/a-beginner-friendly-introduction-to-containers-vms-and-docker-79a9e3e119b) [A must Read]
+# Docker installation
+
+Follow this Document [DockerInstallation](setup.md)
+
+**Docker Commands**
 
 ```
 ->Http API from client to server
@@ -612,3 +615,7 @@ services:
          - elasticsearch
 ```
 ```
+
+# References:
+
+ [Introduction to Docker](https://medium.freecodecamp.org/a-beginner-friendly-introduction-to-containers-vms-and-docker-79a9e3e119b) [A must Read]
