@@ -145,33 +145,55 @@ Follow this Document [DockerInstallation](setup.md)
 
 **Docker Commands**
 
+After successfull Installation Docker needs root access to run the docker commands. There are couple of ways to give access to other users. Asume the other username name is Alice. From Alice user if you run the `docker run` command,
+
+`$ docker run -it ubuntu /bin/bash`
+
+It will fail as permission denied. Now add the Alice User to docker group, Now it will have the permission to run the docker commands. The other way is adding the user to sudoers file. i.e `/etc/sudoers` or `visudo` file.
+
 ```
-->Http API from client to server
-
-Docker needs root access
-/var/run/
-ls -l /run
-
-from another user
-docker run -it ubuntu /bin/bash
 cat /etc/group
-sudo gpasswd -a prasanna docker
-run -> docker run -it ubuntu /bin/bash
+sudo gpasswd -a Alice docker
+```
+Now run the docker run command,
+```
+$ docker run -it ubuntu /bin/bash
+```
+To check the Docker Info
+```
+$ docker info
+```
+To check the Docker version, the docker version list both client and server version, The client to server communication happens via rest(http) API. More info on the above diagram.
 
-#docker info
-#docker version
+```
+$ docker version
+```
+The Docker application has been installed on the Ubuntu Host machine. Even though host machine is Debian based if I run the docker centos, It will share the same kernal.
 
-#docker run it centos /bin/bash
-uname -a #sharing same kernel
-create afile in the container
-exit
-docker ps
-docker ps -a
-cd /var/lib/docker/aufs/diff
-docker start <containerid>
-docker attach <container id>
+On the host machine
+```
+$ uname -a
+```
+Now, run inside the container.
 
+```
+Inside the container
+$ docker run it centos /bin/bash
+uname -a 
+```
+To check the Number of running containers, run the below command,
+```
+$ docker ps
+$ docker ps -a ( will list both all running and non-running containers that has been ran on this host machine)
+```
 
+To start the container and attach it to the container, based on the `docker ps -a` command,
+```
+$ docker start <containerid>
+$ docker attach <container id>
+```
+
+```
 ##Docker components
 ->Docker engine
 -> images
