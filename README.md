@@ -337,7 +337,8 @@ $ docker attach <container id>
    * Different ways to get shell access to the running conatainer.
 
   **Contianer Management**
-    Inside the container, everything operates based on the namespace,cgroups. A namespace is like sandbox, a seprate isolation which will not impact to the host machine, or other containers inside the host machine. And there are multiple namespaces,
+  
+   Inside the container, everything operates based on the namespace,cgroups. A namespace is like sandbox, a seprate isolation which will not impact to the host machine, or other containers inside the host machine. And there are multiple namespaces,
     
    To start the container,
    ```
@@ -367,6 +368,7 @@ $ docker attach <container id>
    will list the last container.
    
  **Container Configuration**
+ 
   It is always recomemded to run one process per container.
   ```
    $ docker ps 
@@ -412,6 +414,7 @@ $ docker attach <container id>
  ```
 
  **Getting inside the shell of the running container**
+ 
  First way is,
  ```
  $ docker attach <id>
@@ -440,6 +443,7 @@ $ docker attach <container id>
  ```
 
 # DockerFile
+
   We can write our own images using Dockerfile. Create a directory
   ```
   $ mkdir DockerStuff
@@ -460,48 +464,210 @@ $ docker attach <container id>
    $ docker images #(will see the newly created helloworld images with 0.1 tag)
   ```
 
-ls -l
-docker build -t helloworld:0.1 .
-
-docker images --tree
-docker history <id>
-docker run helloworld:0.1 
-
-#Docker registry
-docker images
-docker tag <id> prasanna/helloworld:1.0
-docker images
-docker build -t 
-docker push prasanna/helloworld:1.0
-docker rmi <id>
-
-#Deeper in to DockerFile
--> the Build cache
--> DockerFile
-
-#Build Cache
-
-docker images
-cd DockerBuildFiles
-docker build -t="v0.1" .
-docker build -t="v0.2" .
-
-#images layers
-docker images
-docker info
-
+To see the history,and run the container,
 ```
-FROM ubuntu:15.04
-MAINTAINER prassanna.mit@gmail.com
-RUN apt-get update
-RUN apt-get install -y apache2
-RUN apt-get install -y vim
-RUN apt-get install -y golang
-CMD ["echo", "Hello World"]
+$ docker history helloworld:0.1
+$ docker run helloworld:0.1 
 ```
 
-mkdir web
-cd web
+Now Pushing the `helloworld:0.1` container to the docker registry(i.e Dockerhub). Before that create a login on the [DockerHub](https://hub.docker.com/). 
+
+ Now Create a repository, on the dockerhub site.
+ 
+ ![Repo](https://github.com/DevOpsStuff/Containerization/blob/master/CreateRepo.png)
+ 
+ After finished creating the repo,
+ ```
+ $ docker login #(enter the docker hub credentials)
+ $ docker images
+ $ docker tag <id> prasanna/helloworld:1.0 #(id is local helloworld container id)
+ $ docker push prasanna78/helloworld:1.0 #(Pushing to prasanna78/helloworld repo)
+ ```
+
+### Deeper in to DockerFile
+   * The Build cache
+   * DockerFile
+   
+   For the first time, it will take some time to build the container, Next time it consumes less time when running the same build again. Because each layers adds new unique id(which is SHA). Next time if any command is added to the top of the layer. SHA will check if there is any change on the layers. Only the changed layers will be build on top of the docker container layers.
+   
+   ```
+   $ docker images
+   $ cd DockerBuildFiles
+   $ docker build -t="v0.1" .
+   $ docker build -t="v0.2" .
+   ```
+   **Images layers**
+   
+   ```
+   $ docker images
+   $ docker info
+   ```
+   Docker file , each line will adds the new layer to the contianer.
+   
+   ![layers](https://github.com/DevOpsStuff/Containerization/blob/master/optimizing-docker-images-7-638.jpeg)
+     
+
+###  Dockerfile Directives: USER and RUN
+
+```
+docker pull centos:latest
+```
+
+*Dockerfile*
+
+FROM must be the first directive
+
+```
+# Dockerfile based on the latest CentOS 7 image - non-privileged user entry
+FROM centos:latest
+MAINTAINER imboyus@gmail.com
+
+RUN useradd -ms /bin/bash user
+USER user
+```
+
+docker build -t centos7/nonroot:v1 .
+docker run -it centos centos7/nonroot:v1 /bin/bash
+
+_note: When rebuilding an image, it only changes additions and keeps the cache from already existing command builds_
+
+Since a user can't login, we login as user:
+```
+docker ps -a
+docker start cocky_boyd
+docker exec -u 0 -it cocky_boyd /bin/bash
+```
+
+### Dockerfile Directives: RUN Order of Execution
+
+- **Order of Execution**
+    - `FROM`
+    - `MAINTAINER`
+    - `RUN`
+        - * _If you make a `USER` AFTER this, everything will run as THAT user_
+
+- **Important**
+    - `RUN`: execute at build time, becomes part of the base image.
+    - `CMD`: Runs when a container is instantiated, eg: Run an application.
+
+```
+docker build -t centos7/config:v1 .
+docker run -it centos7/config:v1 /bin/bash
+cat /etc/exports.list
+```
+
+### Dockerfile Directives: ENV
+
+
+**When doing updates or installs always do `apt-get update -y` or `yum update -y`**
+
+```
+Docker build -t centos7/java8:v1 .      (You'll see red, that's ok)
+```
+
+Check the `ENV` is set for Java, though limited to one user
+```
+docker images
+docker run -it centos7/java8:v1 /bin/bash
+env
+```
+
+Control System-wide variables
+```
+Dockerfile:
+ENV JAVA_BIN /usr/java/jdk1.8.0/jre
+```
+
+```
+docker run -it centos7/java8:v2 /bin/bash
+env     (Now we see JAVA_HOME global)
+```
+
+### Dockerfile Directives: CMD vs RUN
+
+
+- Differences
+    - `RUN`: execute at build time, becomes part of the **base image**.
+    - `CMD`: Runs when a container is instantiated, or container starts. eg: Run an application. **not part of the build process**, ONE CMD per Dockerfile
+
+```
+docker build -t centos7/echo:v1 .
+docker images
+docker run centos7/echo:v1  ; Should see an echo from the CMD
+```
+
+### Dockerfile Directives: ENTRYPOINT
+
+
+Sets default application used everytime a container is created even if you ask it to do something else.
+
+```
+docker build -t centos7/entry:v1 .
+docker images
+
+; Test these
+docker run centos7/entry:v1
+docker run centos7/echo:v1  /bin/bash echo "See me?"      ; Yes (Notice this is /echo)
+docker run centos7/entry:v1  /bin/bash echo "See me?"     ; No
+docker run centos7/entry:v1                               ; Outputs default CMD
+```
+
+- Difference between `ENTRYPOINT` and `CMD`
+    - `ENTRYPOINT` - Runs no matter what
+    - `CMD` - CAN be overwritten for a command, eg: in an echo example above
+
+### Dockerfile Directives: EXPOSE
+
+- **Commands**
+    - `-P` is to run/remap any ports in the container
+
+```
+docker build -t centos7/apache:v1 .
+docker images
+
+; Run container as daemon so it doesn't exit and think it's done
+
+docker run -d --name apacheweb1 centos7/apache:v1
+docker ps
+docker inspect apacheweb1 | grep IPAdd
+```
+__Dont worry about the red GPG keys__
+
+See it all works
+```
+elinks http://172.17.0.3
+docker exec apacheweb1 /bin/cat /var/www/html/index.html
+docker ps    (Container still running)
+```
+
+No Ports Exposed, so:
+```
+docker stop apacheweb1
+
+docker run -d --name apacheweb2 -P centos7/apache:v1
+docker ps    (no ports exposed still)
+docker stop apacheweb2
+```
+
+Manually Remap ports **outside** of `Dockerfile`
+```
+docker run -d --name apacheweb3 -p 8080:80 centos7/apache:v1
+docker ps    (ports are exposed)
+elinks http://localhost:8080
+```
+
+In `Dockerfile`, add:
+```
+EXPOSE 80
+```
+
+Rebuild and check!
+```
+docker build -t centos7/apache:v1 .
+docker run -d --name apacheweb4 -P centos7/apache:v1
+docker ps
+```
+
 
 ```
 FROM ubuntu:15.04
@@ -520,15 +686,7 @@ docker stop <id>
 
 #Avoid creating unnessary layers
 
-#CMD vs RUN
-CMD
--> runtime
--> run comands in containers at launch time
-equvalent of docker run <args> /bin/bash
--> one CMD per Dockerfile
--> shellform and execform
-CMD echo "hello world"
-CMD echo $var1
+
 
 -> Execform
 ["command","args1"]
@@ -727,7 +885,7 @@ services:
        depends_on:
          - elasticsearch
 ```
-```
+
 
 # References:
 
