@@ -249,43 +249,53 @@ $ docker attach <container id>
    ```
    
 ### Repositories and Registry
-   *TBD
+   There are multiple registeries.Mostly Private and Public registries. Public registries such as dockerhub,quay.io. Under reach registries we will have multiple repositories. And Under each repos, will have multiple images.
+   
+   ![Regitries](https://github.com/DevOpsStuff/Containerization/blob/master/docker_registry_repository.png)
 
 
-```
-#cli demo
-docker images
-docker pull coreos/apache
-docker images --tree
+### Docker Commands:
 
-ls -l /var/lib/docker/aufs/layers/
-cat the file
-
-ls -l /var/lib/docker/aufs/diff/<id>
-
-docker images --tree
-
-#docker copying
-docker images
+ **Docker copying**
  
-docker ps -a
-docker commit  <id> apple
-docker images
-docker images --tree
-docker history apple
+ Now, run a some container and create a file inside the container,
+ ```
+ $ docker images
+ $ docker run -it --name=dockersave ubuntu /bin/bash
+ $ apt-get install vim
+ $ vim file1
+   "added some content"
+ $ exit
+ ```
+ Now even after exiting the container, `docker ps` will only be listing running container, run `docker ps -a` to see all the non-running container. And our container `dockersave` will be listing and all our written files will be still present in that contianer. To commit that container.
 
-docker save -o /tmp/apple.tar apple
-ls -lh /tmp/apple.tar
-
-tar -tf /tmp/apple.tar
-
-docker load -i /tmp/apple.tar
-docker run -it apple /bin/bash
-cat /tmp/cool-file
-
-#images are build time contructs and containers are runtime contructs
-top layer -> thin writeable layer -> consumes space
-
+  ```
+   $ docker ps -a
+   $ docker commit  <id> apple
+   $ docker images
+   $ docker history apple
+  ```
+  After the commit, we will see the `dockersave` container as `apple` in the `docker images` output. The `docker history apply` will list all latest command ran on that `apple` container.
+  
+  To save the container. I've saved as tar file. Now couple of ways we can give this container to others. One is by sending this tar file. the other is by pushing it to docker registry.
+  ```
+   $ docker save -o /tmp/apple.tar apple
+   $ ls -lh /tmp/apple.tar
+   $ tar -tf /tmp/apple.tar
+   ```
+   
+   On other machine, 
+   ```
+   $ docker load -i /tmp/apple.tar
+   $ docker run -it apple /bin/bash
+   $ cat file1
+   $ docker history apple
+   ```
+   Now, the `apple` container has been loaded on the other machine and all our files are present. 
+   
+**NOTE:** Images are build time contructs and containers are runtime contructs.
+  
+```
 #one process per containers
 docker run -d ubuntu /bin/bash -c "ping 8.8.8.8 -c 30"
 docker ps
