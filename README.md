@@ -295,105 +295,170 @@ $ docker attach <container id>
    
 **NOTE:** Images are build time contructs and containers are runtime contructs.
   
-```
-#one process per containers
-docker run -d ubuntu /bin/bash -c "ping 8.8.8.8 -c 30"
-docker ps
-docker top
-docker ps
-docker ps -a
-docker run ubuntu:14.0
+### Docker CPU, Memory
+   It is always recomemded to run one process per containers. Even though we can run multiple process inside the container. Now running the ping process on the ubuntu container, Once the count reaches 30, The ping process will be finished and the contianer exits. Meanwhile I'm running the ping process as detached mode.
+   
+   ```
+   $ docker run -d ubuntu /bin/bash -c "ping 8.8.8.8 -c 30"
+   $ docker ps
+   $ docker top
+   $ docker ps
+   ```
+   After 30 ping count finished, the ping process is closed. And immdiately container will be exited. to see the exited container.
+   ```
+   $ docker ps -a
+   ```
+   
+   To allocate the No. of cpu shares to the particular container.
+   
+   ```
+   $ docker run --cpu-shares=256 -it ubuntu /bin/bash
+   ```
+   More info [DOCKER CPU](https://goldmann.pl/blog/2014/09/11/resource-management-in-docker/#_cpu)
+   
+   To allocate Memory to the container.
+   ```
+   $ docker run memory=1g -it ubuntu /bin/bash
+   ``` 
+ Now running the docker container with infinite ping process count,
+ ```
+   $ docker run -d ubuntu:14.01 /bin/bash -c "ping 8.8.8.8"
+   $ docker ps
+   $ docker inspect <id>
+   $ docker attach <name>
+   ```
+   The `docker inspect` command will list everything realated to the running container details,such as CPU,MEMORY,NETWORK,DISK,etc...
+   
 
-#docker run
-docker run --cpu-shares=256
-docker run memory=1g
+### Container Management
+   * container management
+   * container configuration
+   * Inside running containers
+   * Different ways to get shell access to the running conatainer.
 
-docker run -d ubuntu:14.01 /bin/bash -c "ping 8.8.8.8"
-docker ps
-docker inspect <id>
-docker attach <name>
-exit
-docker ps
+  **Contianer Management**
+    Inside the container, everything operates based on the namespace,cgroups. A namespace is like sandbox, a seprate isolation which will not impact to the host machine, or other containers inside the host machine. And there are multiple namespaces,
+    
+   To start the container,
+   ```
+   $ docker ps -a
+   $ docker start <contianer id> or <container name>
+   ```
+   To stop the running container,
+   ```
+   $ docker stop <container id> or <contianer name>
+   ```
+   To restart the contianer,
+   ```
+   $ docker restart <container id>
+   ```
+  
+  The docker stop will send the `SIGTERM` signal to the contianer process PID1, which will gracefully shutdown the container.
+  
+  To kill the container,
+  ```
+  $ kill -l ( to list all the signals)
+  $ docker kill -s 9 <container id>
+  ```
+  The `docker kill` will send the `SIGKILL` to the container process to forcefully shutdown the container.
+  ```
+  $ docker ps -l
+  ```
+   will list the last container.
+   
+ **Container Configuration**
+  It is always recomemded to run one process per container.
+  ```
+   $ docker ps 
+   $ docker info
+   ```
+   the `docker info` will all the containers, images and other info such as storage details.
+   
+   the other ways to see all the containers in the host machine is
+   ```
+   $ ls -l /var/lib/docker/containers | wc -l
+   ```
+   
+   To remove the running contianer, first stop the contianer,
+   ```
+   $ docker stop <contianer id>
+   $ docker rm <contianer id>
+   ```
+   
+   To remove all the contianer from the `docker ps -a` list. 
+   ```
+   $ for i in $(docker ps -a | sed 1d | awk '{print $3}'); do echo $i; docker stop $i; docker rm $i; done
+   ```
+   
+   The `docker rm -f` will forcefully remove the container. 
 
-#Container Management
--> container management
--> container config
--> look inside running containers
--> differentways to get shell access
+   To remove the images,
+   ```
+   $ docker images
+   $ docker rmi <id>
+   ```
+  
+  Top process of the container,
+  
+ ```
+ $ docker top
+ $ docker top <id>
+ ```
+ 
+ To see the logs of the container,
+ ```
+ $ docker logs <id>
+ $ docker logs -f <id>
+ ```
 
-seperate netns,pidns,mnt
-start -> stop -> restart
-docker run -it ubuntu:14.04 /bin/bash
-ctrl + p + q
-docker ps
-docker stop <id> or <name>
-docker ps
-docker stop -> sigterm to container process PID1
-docker kill -s <sigkill> -> sigkill to container 
-docker ps -l -> last container
-docker start <id>
-docekr attach <id>
-ctrl +p + q
-docker ps
-docker restart <id>
-docekr ps
+ **Getting inside the shell of the running container**
+ First way is,
+ ```
+ $ docker attach <id>
+ ```
+ which will attach to the PID1.
+ 
+ Second way is SSH. Which is not recomemded.
+ 
+ Thrid way is using `nsenter` tool. `nsenter` allows uis to enter in to namespaces. And it also required contianer id(`docker inspect`).
+ ```
+ $ docker inspect <id> | grep pid
+ ```
+ The nsenter command,where each `-u','-m','-n','-p',` are different namespaces. 
+ ```
+ $ nsenter -m -u -n -p -i -t <pid> /bin/bash
+ ```
+ 
+ Fourth way,
+ ```
+  $ docker-enter <id>
+ ```
+ 
+ Best recomemded way is, and mostly used is.
+ ```
+  $ docker exec -it <id> /bin/bash
+ ```
 
-one process / container
+# DockerFile
+  We can write our own images using Dockerfile. Create a directory
+  ```
+  $ mkdir DockerStuff
+  $ cd DockerStuff
+  $ Vim Dockerfile
+    # write the below content in to the dockerfile without quotes.
+    """
+      FROM ubuntu:15.04
+      MAINTAINER youknowme@gmail.com
+      RUN apt-get update
+      RUN apt-get install -y nginx
+      RUN apt-get install -y golang
 
-docker ps 
-docker info
-ls -l /var/lib/docker/containers | wc -l
-docker rm <id>
-docker stop <id>
-docker rm <id>
-docker info
-
-docker rm -f 
-
-#inside the container
-docker top
-docker ps 
-docker top <id>
-#docker run phusion/basheimage
-docker attach <id>
-ps -ef
-docker logs
-docker inspect
-
-docker ps
-docker inspect <id>
-
-ls -l /var/lib/docker/containers/<id>/
-
-#Getting inside the shell
-docker attach -> attachs to pid1
-ssh ->
-nsenter-> allows us to enter namespaces
--> requires the containerid(docker inspect)
-
-docker inspect <id> | grep pid
-nsenter -m -u -n -p -i -t <pid> /bin/bash
-exit
-docker ps
-
-docker-enter <id>
-
-docker exec -it <id> /bin/bash
-
-docker run -v /usr/local/bin:/target jpetazzo/nsenter
-
-
-#DockerFile
-
-'''
-FROM ubuntu:15.04
-MAINTAINER prassanna.mit@gmail.com
-RUN apt-get update
-RUN apt-get install -y nginx
-RUN apt-get install -y golang
-
-CMD [ "echo 'hello world'"]
-'''
+      CMD [ "echo 'hello world'"]
+    """
+    
+   $ docker build -t helloworld:0.1 .  #(building the contianer with tag version 0.1 and named as helloworld in the "." current directory)
+   $ docker images #(will see the newly created helloworld images with 0.1 tag)
+  ```
 
 ls -l
 docker build -t helloworld:0.1 .
