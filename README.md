@@ -193,50 +193,66 @@ $ docker start <containerid>
 $ docker attach <container id>
 ```
 
+### Docker Images  
+ 
+ To pull the images from repositories, and to run the pulled images, while pulling the will see the number of different id, those are layers. Note: Docker images are composed of multiple layers.
+ 
+ ```
+ $ docker pull fedora # will pull the docker images from repo,
+ $ docker images 
+ ```
+ To run the pulled images, Launch container (i = interactive, -t = attach to terminal) This will launch the container, but not keep it running once we exit
+ ```
+ $ docker run -it fedora /bin/bash
+ ```
+ By default, docker will pull the latest tag images. To pull the specific version
+ ```
+ $ docker pull ubuntu (would be latest)
+ $ docker pull ubuntu:trusty (Or any tag listed in dockerhub)
+ ```
+ "Container Layers build the docker image".
+ 
+ And to fetch all the fedora images,
+ ```
+ $ docker pull -a fedora
+ $ docker images fedora
+ ```
+ All the pulled images are are localy stored under the `/var/lib/docker/aufs/` directory on the host machine.
+ 
+ - Locations
+    - **Where Container Details are Located**
+        - `var/lib/docker` is where all `images/containers` are stored
+        - cd `var/lib/docker/containers/<hex>`
+    - **Where Images are Located**
+        - ls `/var/lib/docker/image/aufs/imagedb/content/sha256`
+    
+    **Layered images**
+
+      Docker is a multiple layered filesystem. A Union Mount filesystem. Union mount allows multiple layers. All the below layers are only readable. Only the top layer is writeable/readable. And each layer have unique id. The below layer is called rootfs(layer1).
+  
+  ![LayeredImages](https://github.com/DevOpsStuff/Containerization/blob/master/docker_ubuntu_layers.gif)
+
+
+### Docker containers
+   Containers are launced from images. To launch a container `docker run` command.
+   ```
+   $ docker run -it ubuntu /bin/bash
+   ```
+   And to detach from the container itself, Inside the container 
+   ```
+   ctrl + p + q (Inside the container) 
+   ```
+   
+   Keep the container running in Background
+   ```
+   $ docker run -itd ubuntu:xenial /bin/bash
+   ```
+   
+### Repositories and Registry
+   *TBD
+
+
 ```
-##Docker components
-->Docker engine
--> images
--> containers
--> registries and repositories
-
-Dev -> test -> prod
-
-#Docker Engine
-A Docker Program 
-
-#Docker Images
-Docker run -it fedora /bin/bash
-images are composed of multiple layers
-:latest
-
--> to fetch all fedora images
-docker pull -a fedora
-docker images fedora
-docker pull coreos/etcd
-
-images are localy stored under /var/lib/docker/aufs/
-
-#Docker containers
--> containers are launced from images
-docker run -> to launch the container
-docker run -it ubuntu /bin/bash
-
-ctrl + p + q
-
-#repo and registry
-
-
-
-#Layered images
-(layer0 -> layer1 -> layer2) together single images
-(baseimage-> nginx -> updates) 
-each layer have unique id
-
-union mounts allows multiple layers -> read only -> only the top layer is writeable
-bootfs layer -> sometimes
-rootfs -> layer1 -> layer2
-
 #cli demo
 docker images
 docker pull coreos/apache
