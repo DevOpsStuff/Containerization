@@ -720,12 +720,15 @@ ENV var1=ping var2=8.8.8.8
 CMD $var1 $var2
 ```
 
-#Volumes
+# Docker Volumes
+
+```
 docker run -it -v /test_vol --name=voltainer ubuntu:15.-4 /bin/bash
 create afile under /test_vol in the container
 docker inspect
+```
 
-
+```
 docker run -it -p 5984:5984 -v $(pwd)/data:/usr/local/var/lib/couchdb --name couchdb klaemo/couchdb
 curl -X PUT http://192.168.99.100:5984/db
 insert a document using curl
@@ -734,18 +737,24 @@ curl -X PUT -H "Content-Type: application/json" -d '{"name": "Avengers"}' http:/
 docker create -v /usr/local/var/lib/couchdb --name db-data debian:jessie /bin/true
 docker ps
 docker ps -a
--> first container ->
-docker run -d -p 5984:5984 -v /usr/local/var/lib/clouchdb --name db1 --volumes-from db-data klaemo/couchdb
-->second container
-docker run -d -p 5985:5984 -v /usr/local/var/lib/clouchdb --name db2  --volumes-from db-data klaemo/couchdb
+```
 
+ On the first container
+ ```
+    $ docker run -d -p 5984:5984 -v /usr/local/var/lib/clouchdb --name db1 --volumes-from db-data klaemo/couchdb
+ ```
+
+On the second container
+  ```
+    $ docker run -d -p 5985:5984 -v /usr/local/var/lib/clouchdb --name db2  --volumes-from db-data klaemo/couchdb
+  ```
 
 
 docker run -it --volumes-from=voltainer ubuntu:15.04 /bin/bash
 
-#host mount
+    ### host mount
 not very much scalable
-docker run -it -v /data:/data ubuntu:15.04 /bin/bash
+      docker run -it -v /data:/data ubuntu:15.04 /bin/bash
 
 
 Dockerfile
@@ -766,15 +775,20 @@ free -m
 cat /sys/fs/cgroup/memory/memory.limit_in_bytes
 echo "$((num / 1024 /1024))
 
+ 
 
-#Docker Networking
+#  Docker Networking
 
 Libnetwork
 before 1.11 - network won't scale
 Three pillars of Docker Networking
--> CNM(container network Model)
-  -> DNA of Docker networking
--> CNM -> LibNetwork -> Drivers
+
+- CNM(container network Model)
+  - DNA of Docker networking
+  
+- CNM 
+   - LibNetwork 
+      * Drivers
 
 CNM Vs CNI
 
@@ -784,17 +798,17 @@ endpoint->eth0
 network -> connected endpoints
 
 Libnetwork
-->control plane and management plane
+- control plane and management plane
 
 Drivers
--> Data plane
+- Data plane
 
-->Overlay
-->MacVlan
-->Bridge
--> "local"
+- Overlay
+- MacVlan
+- Bridge
+- local
 
-Native Drivers Vs Remote Drivers
+### Native Drivers Vs Remote Drivers
 
 docker network ls
 default is bridge
@@ -815,13 +829,13 @@ docker network ls
 docker run -d -P --net my-network --name hello ubuntu
 docker inspect hello
 
-#Single Host networking
+### Single Host networking
 on bridge driver
--> bridge network are single host(Vswitch)
--> 
+- bridge network are single host(Vswitch)
+```
 docker network create -d bridge --subnet 10.0.0.1/24 ps-bridge
 docker network inspect ps-bridge
-
+```
 on linux
 apt-get install bridge-utils
 brctl show
@@ -851,7 +865,7 @@ service Discovery
 Route mesh
 
 
-##Docker Compose
+## Docker Compose
 
 ```
 version: "2"
